@@ -1,20 +1,33 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import { AppModule } from './app.module';
-
-function getPort() {
-  if (process.env.PORT) {
-    return Number(process.env.PORT);
-  }
-
-  if (process.env.API_URL) {
-    return Number(new URL(process.env.API_URL).port);
-  }
-
-  return 4000;
-}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(getPort());
+
+  app.setGlobalPrefix('api/v1');
+
+  app.use(helmet());
+  app.use(cookieParser());
+  app.use(compression());
+
+  app.enableCors({
+    origin: process.env.APP_URL,
+    credentials: true,
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  await app.listen(process.env.PORT || 4000);
 }
+
 bootstrap();

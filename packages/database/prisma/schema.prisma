@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -41,6 +42,10 @@ model RefreshToken {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  userAgent String?
+  ipAddress String?
+
+  revokedAt DateTime?
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
