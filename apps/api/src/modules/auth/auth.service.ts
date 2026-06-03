@@ -73,7 +73,7 @@ export class AuthService {
       role: user.role,
     });
 
-    const refreshToken = await this.generateRefreshToken();
+    const refreshToken = this.generateRefreshToken();
 
     await this.prisma.refreshToken.create({
       data: {
@@ -122,7 +122,7 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
 
-      const newRefreshToken = await this.generateRefreshToken();
+      const newRefreshToken = this.generateRefreshToken();
 
       await this.prisma.refreshToken.create({
         data: {
@@ -141,6 +141,14 @@ export class AuthService {
       return {
         accessToken,
         refreshToken: newRefreshToken,
+        user: {
+          id: token.user.id,
+          email: token.user.email,
+          firstName: token.user.firstName,
+          lastName: token.user.lastName,
+          role: token.user.role,
+          status: token.user.status,
+        },
       };
     }
 
@@ -177,7 +185,7 @@ export class AuthService {
     });
   }
 
-  private async generateRefreshToken() {
+  private generateRefreshToken() {
     return crypto.randomUUID() + crypto.randomUUID();
   }
 }

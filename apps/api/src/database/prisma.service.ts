@@ -18,17 +18,14 @@ export class PrismaService
       connectionString: databaseUrl,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({ adapter });
   }
 
   async onModuleInit(): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await this.$connect();
   }
 
   async onModuleDestroy(): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await this.$disconnect();
   }
 }
