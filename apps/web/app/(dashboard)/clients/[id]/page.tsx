@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ClientNote, getClientById } from '@/features/clients/api';
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getClientKycDocuments } from '@/features/kyc/api';
 import { KycUploadForm } from '@/features/kyc/components/kyc-upload-form';
+import { getTransactions } from '@/features/transactions/api';
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -23,6 +25,18 @@ export default function ClientDetailPage() {
     queryFn: () => getClientKycDocuments(clientId),
     enabled: Boolean(clientId),
   });
+
+  const { data: clientTransactions, isLoading: clientTransactionsLoading } =
+    useQuery({
+      queryKey: ['client-transactions', clientId],
+      queryFn: () =>
+        getTransactions({
+          clientId,
+          page: 1,
+          limit: 5,
+        }),
+      enabled: Boolean(clientId),
+    });
 
   if (isLoading) {
     return <div>Loading client...</div>;
@@ -153,6 +167,69 @@ export default function ClientDetailPage() {
                         colSpan={4}
                       >
                         No KYC documents uploaded.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Type</th>
+                    <th className="px-4 py-3 text-left">Amount</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {clientTransactionsLoading ? (
+                    <tr>
+                      <td className="px-4 py-6" colSpan={4}>
+                        Loading transactions...
+                      </td>
+                    </tr>
+                  ) : clientTransactions?.items?.length ? (
+                    clientTransactions.items.map((transaction: any) => (
+                      <tr key={transaction.id} className="border-t">
+                        <td className="px-4 py-3">{transaction.type}</td>
+
+                        <td className="px-4 py-3">
+                          {transaction.currency} {transaction.amount}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          <Badge variant="outline">{transaction.status}</Badge>
+                        </td>
+
+                        <td className="px-4 py-3 text-right">
+                          <Link
+                            href={`/transactions/${transaction.id}`}
+                            className="font-medium text-primary"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        className="px-4 py-6 text-muted-foreground"
+                        colSpan={4}
+                      >
+                        No transactions found.
                       </td>
                     </tr>
                   )}

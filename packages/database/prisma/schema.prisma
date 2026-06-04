@@ -38,6 +38,10 @@ model User {
   assignedClients Client[] @relation("AssignedClients")
   adminNotes    AdminNote[]
   reviewedKycDocuments KycDocument[] @relation("ReviewedKycDocuments")
+
+  requestedTransactions Transaction[] @relation("RequestedTransactions")
+  reviewedTransactions  Transaction[] @relation("ReviewedTransactions")
+  transactionAuditLogs  TransactionAuditLog[]
 }
 
 model RefreshToken {
@@ -100,6 +104,7 @@ model Client {
   updatedAt   DateTime     @updatedAt
 
   notes       AdminNote[]
+  transactions Transaction[]
 }
 
 model AdminNote {
@@ -135,4 +140,65 @@ model KycDocument {
   reviewedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  clientId    String
+  client      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+
+  amount      Decimal           @db.Decimal(18, 2)
+  currency    String            @default("USD")
+
+  reference   String?
+  description String?
+
+  requestedById String
+  requestedBy   User @relation("RequestedTransactions", fields: [requestedById], references: [id])
+
+  reviewedById String?
+  reviewedBy   User? @relation("ReviewedTransactions", fields: [reviewedById], references: [id])
+
+  reviewedAt DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs TransactionAuditLog[]
+}
+
+model TransactionAuditLog {
+  id            String @id @default(uuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  actorId String
+  actor   User @relation(fields: [actorId], references: [id])
+
+  action  String
+  fromStatus TransactionStatus?
+  toStatus   TransactionStatus?
+
+  note      String?
+  createdAt DateTime @default(now())
 }

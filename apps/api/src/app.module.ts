@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { KycModule } from './modules/kyc/kyc.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { KycModule } from './modules/kyc/kyc.module';
     AuthModule,
     ClientsModule,
     KycModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
