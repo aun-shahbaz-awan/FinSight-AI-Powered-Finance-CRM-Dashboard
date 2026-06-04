@@ -37,6 +37,7 @@ model User {
   client        Client?
   assignedClients Client[] @relation("AssignedClients")
   adminNotes    AdminNote[]
+  reviewedKycDocuments KycDocument[] @relation("ReviewedKycDocuments")
 }
 
 model RefreshToken {
@@ -67,6 +68,19 @@ enum KycStatus {
   REJECTED
 }
 
+enum KycDocumentType {
+  PASSPORT
+  NATIONAL_ID
+  DRIVING_LICENSE
+  PROOF_OF_ADDRESS
+}
+
+enum KycDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Client {
   id          String       @id @default(uuid())
   userId      String       @unique
@@ -77,6 +91,7 @@ model Client {
   city        String?
   status      ClientStatus @default(PENDING_KYC)
   kycStatus   KycStatus    @default(NOT_STARTED)
+  kycDocuments KycDocument[]
 
   assignedToId String?
   assignedTo   User?       @relation("AssignedClients", fields: [assignedToId], references: [id])
@@ -97,4 +112,27 @@ model AdminNote {
 
   content   String
   createdAt DateTime @default(now())
+}
+
+model KycDocument {
+  id        String  @id @default(uuid())
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  type      KycDocumentType
+  status    KycDocumentStatus @default(PENDING)
+
+  fileName  String
+  fileUrl   String
+  mimeType  String
+  size      Int
+
+  rejectionReason String?
+
+  reviewedById String?
+  reviewedBy   User?   @relation("ReviewedKycDocuments", fields: [reviewedById], references: [id])
+
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
