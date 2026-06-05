@@ -19,6 +19,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  generateSupportReply,
+  summarizeTicket,
+} from '@/features/ai/api';
+import { AiResponse } from '@/components/ai-response';
 
 export default function TicketDetailPage() {
   const params = useParams();
@@ -30,10 +35,32 @@ export default function TicketDetailPage() {
   const [message, setMessage] = useState('');
   const [isInternal, setIsInternal] = useState(false);
 
+  const [aiSummary, setAiSummary] = useState('');
+  const [aiReply, setAiReply] = useState('');
+  const [replyInstruction, setReplyInstruction] = useState('');
+
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: () => getTicketById(ticketId),
     enabled: Boolean(ticketId),
+  });
+
+  const summarizeMutation = useMutation({
+    mutationFn: () => summarizeTicket(ticketId),
+    onSuccess: (data) => {
+      setAiSummary(data.summary);
+    },
+  });
+
+  const generateReplyMutation = useMutation({
+    mutationFn: () =>
+      generateSupportReply(ticketId, {
+        tone: 'professional',
+        instruction: replyInstruction,
+      }),
+    onSuccess: (data) => {
+      setAiReply(data.reply);
+    },
   });
 
   useEffect(() => {
@@ -110,9 +137,8 @@ export default function TicketDetailPage() {
               {ticket.messages?.map((item: any) => (
                 <div
                   key={item.id}
-                  className={`rounded-lg border p-4 ${
-                    item.isInternal ? 'bg-yellow-50' : 'bg-background'
-                  }`}
+                  className={`rounded-lg border p-4 ${item.isInternal ? 'bg-yellow-50' : 'bg-background'
+                    }`}
                 >
                   <div className="mb-2 flex justify-between gap-3">
                     <div>
@@ -199,6 +225,55 @@ export default function TicketDetailPage() {
                 {ticket.createdBy.firstName} {ticket.createdBy.lastName}
               </span>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Assistance</CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <Button
+              className="w-full"
+              variant="outline"
+              disabled={summarizeMutation.isPending}
+              onClick={() => summarizeMutation.mutate()}
+            >
+              {summarizeMutation.isPending ? 'Summarizing...' : 'Summarize Ticket'}
+            </Button>
+
+            {aiSummary ? (
+              <AiResponse content={aiSummary} className="p-3" />
+            ) : null}
+
+            <Textarea
+              placeholder="Optional instruction for AI reply..."
+              value={replyInstruction}
+              onChange={(event) => setReplyInstruction(event.target.value)}
+            />
+
+            <Button
+              className="w-full"
+              disabled={generateReplyMutation.isPending}
+              onClick={() => generateReplyMutation.mutate()}
+            >
+              {generateReplyMutation.isPending ? 'Generating...' : 'Generate Reply'}
+            </Button>
+
+            {aiReply ? (
+              <div className="space-y-3">
+                <AiResponse content={aiReply} className="p-3" />
+
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setMessage(aiReply)}
+                >
+                  Use as Reply
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

@@ -47,6 +47,8 @@ model User {
   createdTickets  SupportTicket[] @relation("CreatedTickets")
   ticketMessages  TicketMessage[] @relation("TicketMessages")
   notifications   Notification[]
+
+  aiLogs AiLog[]
 }
 
 model RefreshToken {
@@ -282,4 +284,26 @@ model Notification {
   metadata Json?
 
   createdAt DateTime @default(now())
+}
+
+enum AiActionType {
+  TICKET_SUMMARY
+  SUPPORT_REPLY
+  CLIENT_RISK_SUMMARY
+  DASHBOARD_QA
+}
+
+model AiLog {
+  id        String       @id @default(uuid())
+  action    AiActionType
+
+  prompt    String
+  response  String
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+
+  metadata  Json?
+
+  createdAt DateTime     @default(now())
 }

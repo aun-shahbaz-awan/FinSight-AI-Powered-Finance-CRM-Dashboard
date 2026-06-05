@@ -1,18 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ClientNote, getClientById } from '@/features/clients/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getClientKycDocuments } from '@/features/kyc/api';
 import { KycUploadForm } from '@/features/kyc/components/kyc-upload-form';
 import { getTransactions } from '@/features/transactions/api';
+import { summarizeClientRisk } from '@/features/ai/api';
+import { Button } from '@/components/ui/button';
+import { AiResponse } from '@/components/ai-response';
 
 export default function ClientDetailPage() {
   const params = useParams();
   const clientId = params.id as string;
+
+  const [riskSummary, setRiskSummary] = useState('');
+
+  const riskSummaryMutation = useMutation({
+    mutationFn: () => summarizeClientRisk(clientId),
+    onSuccess: (data) => {
+      setRiskSummary(data.riskSummary);
+    },
+  });
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['client', clientId],
@@ -56,6 +69,29 @@ export default function ClientDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Risk Summary</CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <Button
+              disabled={riskSummaryMutation.isPending}
+              onClick={() => riskSummaryMutation.mutate()}
+            >
+              {riskSummaryMutation.isPending ? 'Analyzing...' : 'Generate Risk Summary'}
+            </Button>
+
+            {riskSummary ? (
+              <AiResponse content={riskSummary} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Generate an AI summary based on client KYC, transactions, and ticket history.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Client Information</CardTitle>

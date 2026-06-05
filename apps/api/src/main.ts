@@ -6,6 +6,7 @@ import compression from 'compression';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { getAllowedOrigins } from './config/cors';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -17,7 +18,7 @@ async function bootstrap() {
   app.use(compression());
 
   app.enableCors({
-    origin: process.env.APP_URL,
+    origin: getAllowedOrigins(),
     credentials: true,
   });
 

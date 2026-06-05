@@ -10,6 +10,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     RealtimeModule,
     NotificationsModule,
     TicketsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

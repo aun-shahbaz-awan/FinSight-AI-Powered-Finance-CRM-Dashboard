@@ -42,10 +42,7 @@ export function DashboardTopbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button aria-label="Notifications" size="icon" variant="ghost">
-          {/* <Bell className="size-4" /> */}
-          <NotificationDropdown />
-        </Button>
+        <NotificationDropdown />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

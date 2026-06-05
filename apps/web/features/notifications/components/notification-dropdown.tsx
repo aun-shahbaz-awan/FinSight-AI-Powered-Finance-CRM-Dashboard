@@ -53,7 +53,13 @@ export function NotificationDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
+        <Button
+          aria-label="Notifications"
+          variant="ghost"
+          size="icon"
+          className="relative"
+          type="button"
+        >
           <Bell className="h-4 w-4" />
 
           {unreadCount > 0 ? (

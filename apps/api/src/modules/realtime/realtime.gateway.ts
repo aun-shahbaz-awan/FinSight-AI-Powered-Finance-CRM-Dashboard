@@ -7,6 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { getAllowedOrigins } from '../../config/cors';
 
 type AuthenticatedSocket = Socket & {
   handshake: Socket['handshake'] & {
@@ -18,7 +19,7 @@ type AuthenticatedSocket = Socket & {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.APP_URL,
+    origin: getAllowedOrigins(),
     credentials: true,
   },
 })
