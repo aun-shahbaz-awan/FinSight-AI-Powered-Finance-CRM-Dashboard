@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, LogOut, Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { logout } from "@/features/auth/api";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { NotificationDropdown } from '@/features/notifications/components/notification-dropdown';
 
 const getInitials = (firstName?: string, lastName?: string) => {
   const initials = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.trim();
@@ -42,7 +43,8 @@ export function DashboardTopbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <Button aria-label="Notifications" size="icon" variant="ghost">
-          <Bell className="size-4" />
+          {/* <Bell className="size-4" /> */}
+          <NotificationDropdown />
         </Button>
 
         <DropdownMenu>

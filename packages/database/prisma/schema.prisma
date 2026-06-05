@@ -30,32 +30,37 @@ model User {
   role         UserRole   @default(CLIENT)
   status       UserStatus @default(ACTIVE)
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
-  client        Client?
-  assignedClients Client[] @relation("AssignedClients")
-  adminNotes    AdminNote[]
-  reviewedKycDocuments KycDocument[] @relation("ReviewedKycDocuments")
+  refreshTokens        RefreshToken[]
+  client               Client?
+  assignedClients      Client[]       @relation("AssignedClients")
+  adminNotes           AdminNote[]
+  reviewedKycDocuments KycDocument[]  @relation("ReviewedKycDocuments")
 
-  requestedTransactions Transaction[] @relation("RequestedTransactions")
-  reviewedTransactions  Transaction[] @relation("ReviewedTransactions")
+  requestedTransactions Transaction[]         @relation("RequestedTransactions")
+  reviewedTransactions  Transaction[]         @relation("ReviewedTransactions")
   transactionAuditLogs  TransactionAuditLog[]
+
+  assignedTickets SupportTicket[] @relation("AssignedTickets")
+  createdTickets  SupportTicket[] @relation("CreatedTickets")
+  ticketMessages  TicketMessage[] @relation("TicketMessages")
+  notifications   Notification[]
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   tokenHash String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   userAgent String?
   ipAddress String?
 
   revokedAt DateTime?
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 enum ClientStatus {
@@ -86,51 +91,53 @@ enum KycDocumentStatus {
 }
 
 model Client {
-  id          String       @id @default(uuid())
-  userId      String       @unique
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  phone       String?
-  country     String?
-  city        String?
-  status      ClientStatus @default(PENDING_KYC)
-  kycStatus   KycStatus    @default(NOT_STARTED)
+  phone        String?
+  country      String?
+  city         String?
+  status       ClientStatus  @default(PENDING_KYC)
+  kycStatus    KycStatus     @default(NOT_STARTED)
   kycDocuments KycDocument[]
 
   assignedToId String?
-  assignedTo   User?       @relation("AssignedClients", fields: [assignedToId], references: [id])
+  assignedTo   User?   @relation("AssignedClients", fields: [assignedToId], references: [id])
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  notes       AdminNote[]
+  notes        AdminNote[]
   transactions Transaction[]
+
+  tickets SupportTicket[]
 }
 
 model AdminNote {
-  id        String   @id @default(uuid())
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   content   String
   createdAt DateTime @default(now())
 }
 
 model KycDocument {
-  id        String  @id @default(uuid())
-  clientId  String
-  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  type      KycDocumentType
-  status    KycDocumentStatus @default(PENDING)
+  type   KycDocumentType
+  status KycDocumentStatus @default(PENDING)
 
-  fileName  String
-  fileUrl   String
-  mimeType  String
-  size      Int
+  fileName String
+  fileUrl  String
+  mimeType String
+  size     Int
 
   rejectionReason String?
 
@@ -138,8 +145,8 @@ model KycDocument {
   reviewedBy   User?   @relation("ReviewedKycDocuments", fields: [reviewedById], references: [id])
 
   reviewedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 enum TransactionType {
@@ -159,26 +166,26 @@ enum TransactionStatus {
 }
 
 model Transaction {
-  id          String            @id @default(uuid())
-  clientId    String
-  client      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  type        TransactionType
-  status      TransactionStatus @default(PENDING)
+  type   TransactionType
+  status TransactionStatus @default(PENDING)
 
-  amount      Decimal           @db.Decimal(18, 2)
-  currency    String            @default("USD")
+  amount   Decimal @db.Decimal(18, 2)
+  currency String  @default("USD")
 
   reference   String?
   description String?
 
   requestedById String
-  requestedBy   User @relation("RequestedTransactions", fields: [requestedById], references: [id])
+  requestedBy   User   @relation("RequestedTransactions", fields: [requestedById], references: [id])
 
   reviewedById String?
-  reviewedBy   User? @relation("ReviewedTransactions", fields: [reviewedById], references: [id])
+  reviewedBy   User?   @relation("ReviewedTransactions", fields: [reviewedById], references: [id])
 
-  reviewedAt DateTime?
+  reviewedAt      DateTime?
   rejectionReason String?
 
   createdAt DateTime @default(now())
@@ -188,17 +195,91 @@ model Transaction {
 }
 
 model TransactionAuditLog {
-  id            String @id @default(uuid())
+  id            String      @id @default(uuid())
   transactionId String
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   actorId String
-  actor   User @relation(fields: [actorId], references: [id])
+  actor   User   @relation(fields: [actorId], references: [id])
 
-  action  String
+  action     String
   fromStatus TransactionStatus?
   toStatus   TransactionStatus?
 
   note      String?
+  createdAt DateTime @default(now())
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_UPDATED
+  TICKET_MESSAGE
+  TRANSACTION_UPDATED
+  KYC_UPDATED
+}
+
+model SupportTicket {
+  id       String @id @default(uuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  subject  String
+  status   TicketStatus   @default(OPEN)
+  priority TicketPriority @default(MEDIUM)
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTickets", fields: [assignedToId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("CreatedTickets", fields: [createdById], references: [id])
+
+  messages TicketMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketMessage {
+  id String @id @default(uuid())
+
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation("TicketMessages", fields: [senderId], references: [id])
+
+  message    String
+  isInternal Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  title   String
+  message String
+  readAt  DateTime?
+
+  metadata Json?
+
   createdAt DateTime @default(now())
 }

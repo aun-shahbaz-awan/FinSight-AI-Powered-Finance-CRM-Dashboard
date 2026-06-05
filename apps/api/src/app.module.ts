@@ -7,6 +7,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { KycModule } from './modules/kyc/kyc.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     ClientsModule,
     KycModule,
     TransactionsModule,
+    RealtimeModule,
+    NotificationsModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
