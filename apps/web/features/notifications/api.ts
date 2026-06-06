@@ -9,3 +9,12 @@ export const markNotificationAsRead = async (id: string) => {
   const response = await apiClient.patch(`/notifications/${id}/read`);
   return response.data;
 };
+
+export const publishPublicNotification = async (payload: {
+  title: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+}) => {
+  const response = await apiClient.post('/notifications/public', payload);
+  return response.data;
+};

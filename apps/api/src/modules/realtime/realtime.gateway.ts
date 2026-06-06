@@ -58,4 +58,8 @@ export class RealtimeGateway implements OnGatewayConnection {
   emitToTicket(ticketId: string, event: string, payload: unknown) {
     this.server.to(`ticket:${ticketId}`).emit(event, payload);
   }
+
+  emitPublic(event: string, payload: unknown) {
+    this.server.emit(event, payload);
+  }
 }

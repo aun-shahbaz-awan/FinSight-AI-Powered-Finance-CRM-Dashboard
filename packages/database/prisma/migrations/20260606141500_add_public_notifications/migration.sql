@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Notification"
+ALTER COLUMN "userId" DROP NOT NULL,
+ADD COLUMN "isPublic" BOOLEAN NOT NULL DEFAULT false;

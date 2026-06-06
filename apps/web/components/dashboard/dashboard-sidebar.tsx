@@ -6,6 +6,7 @@ import {
   CreditCard,
   Ticket,
   Bot,
+  Bell
 } from 'lucide-react';
 
 const navItems = [
@@ -33,6 +34,11 @@ const navItems = [
     label: 'Tickets',
     href: '/tickets',
     icon: Ticket,
+  },
+  {
+    label: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
   },
   {
     label: 'AI Assistant',
