@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { KycModule } from './modules/kyc/kyc.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
@@ -28,6 +29,7 @@ import { AuditModule } from './modules/audit/audit.module';
     ]),
     DatabaseModule,
     AuthModule,
+    DashboardModule,
     ClientsModule,
     KycModule,
     TransactionsModule,
