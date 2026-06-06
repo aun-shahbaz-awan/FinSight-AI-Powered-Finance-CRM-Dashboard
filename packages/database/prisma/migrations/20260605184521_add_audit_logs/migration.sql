@@ -1,0 +1,20 @@
+-- CreateEnum
+CREATE TYPE "AuditAction" AS ENUM ('USER_LOGIN', 'USER_LOGOUT', 'CLIENT_CREATED', 'CLIENT_UPDATED', 'KYC_UPLOADED', 'KYC_REVIEWED', 'TRANSACTION_CREATED', 'TRANSACTION_REVIEWED', 'TRANSACTION_COMPLETED', 'TRANSACTION_CANCELLED', 'TICKET_CREATED', 'TICKET_UPDATED', 'TICKET_MESSAGE_CREATED', 'AI_USED');
+
+-- CreateTable
+CREATE TABLE "AuditLog" (
+    "id" TEXT NOT NULL,
+    "action" "AuditAction" NOT NULL,
+    "actorId" TEXT,
+    "entity" TEXT,
+    "entityId" TEXT,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+);
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

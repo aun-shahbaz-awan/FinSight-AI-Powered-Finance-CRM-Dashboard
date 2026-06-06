@@ -49,6 +49,7 @@ model User {
   notifications   Notification[]
 
   aiLogs AiLog[]
+  auditLogs AuditLog[]
 }
 
 model RefreshToken {
@@ -306,4 +307,39 @@ model AiLog {
   metadata  Json?
 
   createdAt DateTime     @default(now())
+}
+
+enum AuditAction {
+  USER_LOGIN
+  USER_LOGOUT
+  CLIENT_CREATED
+  CLIENT_UPDATED
+  KYC_UPLOADED
+  KYC_REVIEWED
+  TRANSACTION_CREATED
+  TRANSACTION_REVIEWED
+  TRANSACTION_COMPLETED
+  TRANSACTION_CANCELLED
+  TICKET_CREATED
+  TICKET_UPDATED
+  TICKET_MESSAGE_CREATED
+  AI_USED
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  action    AuditAction
+
+  actorId   String?
+  actor     User?       @relation(fields: [actorId], references: [id])
+
+  entity    String?
+  entityId  String?
+
+  ipAddress String?
+  userAgent String?
+
+  metadata  Json?
+
+  createdAt DateTime    @default(now())
 }

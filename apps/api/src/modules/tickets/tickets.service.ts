@@ -1,24 +1,43 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationType, Prisma, TicketStatus } from '@finsight/database';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import {
+  NotificationType,
+  Prisma,
+  TicketStatus,
+  UserRole,
+} from '@finsight/database';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
 import { TicketQueryDto } from './dto/ticket-query.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { resolveClientIdForActor } from '../../common/auth/client-access.util';
 
 @Injectable()
 export class TicketsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly realtime: RealtimeGateway,
   ) {}
 
-  async create(dto: CreateTicketDto, actorId: string) {
+  async create(dto: CreateTicketDto, actor: JwtPayload) {
+    const clientId = await resolveClientIdForActor(
+      this.prisma,
+      actor,
+      dto.clientId,
+    );
+
     const client = await this.prisma.client.findUnique({
-      where: { id: dto.clientId },
+      where: { id: clientId },
       include: { user: true },
     });
 
@@ -28,14 +47,14 @@ export class TicketsService {
 
     const ticket = await this.prisma.supportTicket.create({
       data: {
-        clientId: dto.clientId,
+        clientId,
         subject: dto.subject,
         priority: dto.priority,
         assignedToId: dto.assignedToId,
-        createdById: actorId,
+        createdById: actor.sub,
         messages: {
           create: {
-            senderId: actorId,
+            senderId: actor.sub,
             message: dto.message,
           },
         },
@@ -117,7 +136,7 @@ export class TicketsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, actor?: JwtPayload) {
     const ticket = await this.prisma.supportTicket.findUnique({
       where: { id },
       include: this.ticketInclude(),
@@ -125,6 +144,10 @@ export class TicketsService {
 
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
+    }
+
+    if (actor?.role === UserRole.CLIENT && ticket.client.userId !== actor.sub) {
+      throw new ForbiddenException('You cannot access this ticket');
     }
 
     return ticket;
@@ -154,13 +177,13 @@ export class TicketsService {
     return ticket;
   }
 
-  async addMessage(id: string, actorId: string, dto: CreateTicketMessageDto) {
-    const ticket = await this.findOne(id);
+  async addMessage(id: string, actor: JwtPayload, dto: CreateTicketMessageDto) {
+    const ticket = await this.findOne(id, actor);
 
     const message = await this.prisma.ticketMessage.create({
       data: {
         ticketId: id,
-        senderId: actorId,
+        senderId: actor.sub,
         message: dto.message,
         isInternal: dto.isInternal ?? false,
       },
@@ -188,7 +211,7 @@ export class TicketsService {
     });
 
     const notifyUserId =
-      actorId === ticket.client.userId
+      actor.sub === ticket.client.userId
         ? ticket.assignedToId
         : ticket.client.userId;
 

@@ -51,8 +51,9 @@ export class KycController {
     @Param('clientId') clientId: string,
     @Param('type') type: KycDocumentType,
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.kycService.uploadDocument(clientId, type, file);
+    return this.kycService.uploadDocument(clientId, type, file, user);
   }
 
   @Get()
@@ -68,8 +69,11 @@ export class KycController {
     UserRole.MANAGER,
     UserRole.CLIENT,
   )
-  findClientDocuments(@Param('clientId') clientId: string) {
-    return this.kycService.findClientDocuments(clientId);
+  findClientDocuments(
+    @Param('clientId') clientId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.kycService.findClientDocuments(clientId, user);
   }
 
   @Patch('documents/:documentId/review')

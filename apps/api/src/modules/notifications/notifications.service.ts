@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationType, Prisma } from '@finsight/database';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
     private readonly realtime: RealtimeGateway,
   ) {}
 

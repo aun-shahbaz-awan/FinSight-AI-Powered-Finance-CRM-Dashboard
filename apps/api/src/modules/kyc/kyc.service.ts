@@ -11,7 +11,10 @@ import {
   type Prisma,
 } from '@finsight/database';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { ReviewKycDto } from './dto/review-kyc.dto';
+import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { resolveClientIdForActor } from '../../common/auth/client-access.util';
 
 type KycDocumentWithReviewContext = Prisma.KycDocumentGetPayload<{
   include: {
@@ -40,13 +43,22 @@ type KycDocumentWithReviewContext = Prisma.KycDocumentGetPayload<{
 
 @Injectable()
 export class KycService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async uploadDocument(
-    clientId: string,
+    requestedClientId: string,
     type: KycDocumentType,
     file: Express.Multer.File,
-  ): Promise<KycDocument> {
+    actor: JwtPayload,
+  ) {
+    const clientId = await resolveClientIdForActor(
+      this.prisma,
+      actor,
+      requestedClientId,
+    );
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -120,7 +132,13 @@ export class KycService {
     });
   }
 
-  async findClientDocuments(clientId: string): Promise<KycDocument[]> {
+  async findClientDocuments(requestedClientId: string, actor: JwtPayload) {
+    const clientId = await resolveClientIdForActor(
+      this.prisma,
+      actor,
+      requestedClientId,
+    );
+
     return this.prisma.kycDocument.findMany({
       where: { clientId },
       orderBy: { createdAt: 'desc' },

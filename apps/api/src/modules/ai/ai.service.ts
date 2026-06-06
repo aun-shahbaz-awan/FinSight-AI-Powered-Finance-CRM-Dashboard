@@ -6,6 +6,7 @@ import {
 import OpenAI from 'openai';
 import { AiActionType, Prisma } from '@finsight/database';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { DashboardQuestionDto } from './dto/dashboard-question.dto';
 import { GenerateSupportReplyDto } from './dto/generate-support-reply.dto';
 
@@ -22,7 +23,10 @@ export class AiService {
 
   private readonly model = process.env.OPENROUTER_MODEL || 'openrouter/free';
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async summarizeTicket(ticketId: string, userId: string) {
     const ticket = await this.prisma.supportTicket.findUnique({

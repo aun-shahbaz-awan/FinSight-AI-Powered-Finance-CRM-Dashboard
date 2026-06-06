@@ -34,7 +34,7 @@ export class TicketsController {
     UserRole.CLIENT,
   )
   create(@Body() dto: CreateTicketDto, @CurrentUser() user: JwtPayload) {
-    return this.ticketsService.create(dto, user.sub);
+    return this.ticketsService.create(dto, user);
   }
 
   @Get()
@@ -56,8 +56,8 @@ export class TicketsController {
     UserRole.SUPPORT_AGENT,
     UserRole.CLIENT,
   )
-  findOne(@Param('id') id: string) {
-    return this.ticketsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.ticketsService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -84,6 +84,6 @@ export class TicketsController {
     @Body() dto: CreateTicketMessageDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.ticketsService.addMessage(id, user.sub, dto);
+    return this.ticketsService.addMessage(id, user, dto);
   }
 }

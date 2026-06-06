@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,6 +12,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { AiModule } from './modules/ai/ai.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -18,6 +20,12 @@ import { AiModule } from './modules/ai/ai.module';
       envFilePath: ['../../.env', '.env'],
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     DatabaseModule,
     AuthModule,
     ClientsModule,
@@ -27,6 +35,7 @@ import { AiModule } from './modules/ai/ai.module';
     NotificationsModule,
     TicketsModule,
     AiModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

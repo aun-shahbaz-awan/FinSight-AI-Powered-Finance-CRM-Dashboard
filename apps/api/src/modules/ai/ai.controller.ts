@@ -4,10 +4,13 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import type { JwtPayload } from '../auth/types/jwt-payload.type';
 import { AiService } from './ai.service';
 import { DashboardQuestionDto } from './dto/dashboard-question.dto';
 import { GenerateSupportReplyDto } from './dto/generate-support-reply.dto';
+import { Throttle } from '@nestjs/throttler';
 
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller('ai')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AiController {
@@ -22,7 +25,7 @@ export class AiController {
   )
   summarizeTicket(
     @Param('ticketId') ticketId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
   ) {
     return this.aiService.summarizeTicket(ticketId, user.sub);
   }
@@ -36,7 +39,7 @@ export class AiController {
   )
   generateSupportReply(
     @Param('ticketId') ticketId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: GenerateSupportReplyDto,
   ) {
     return this.aiService.generateSupportReply(ticketId, user.sub, dto);
@@ -46,7 +49,7 @@ export class AiController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
   summarizeClientRisk(
     @Param('clientId') clientId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
   ) {
     return this.aiService.summarizeClientRisk(clientId, user.sub);
   }
@@ -54,7 +57,7 @@ export class AiController {
   @Post('dashboard/ask')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
   askDashboardQuestion(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: DashboardQuestionDto,
   ) {
     return this.aiService.askDashboardQuestion(user.sub, dto);
@@ -67,7 +70,9 @@ export class AiController {
     UserRole.MANAGER,
     UserRole.SUPPORT_AGENT,
   )
-  getMyAiLogs(@CurrentUser() user: any) {
+  getMyAiLogs(
+    @CurrentUser() user: JwtPayload,
+  ): ReturnType<AiService['getMyLogs']> {
     return this.aiService.getMyLogs(user.sub);
   }
 }

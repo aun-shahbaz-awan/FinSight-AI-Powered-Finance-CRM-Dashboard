@@ -32,7 +32,7 @@ export class TransactionsController {
     UserRole.CLIENT,
   )
   create(@Body() dto: CreateTransactionDto, @CurrentUser() user: JwtPayload) {
-    return this.transactionsService.create(dto, user.sub);
+    return this.transactionsService.create(dto, user);
   }
 
   @Get()

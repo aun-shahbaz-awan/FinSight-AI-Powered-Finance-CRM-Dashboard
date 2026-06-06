@@ -5,17 +5,29 @@ import {
 } from '@nestjs/common';
 import { TransactionStatus, type Prisma } from '@finsight/database';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { ReviewTransactionDto } from './dto/review-transaction.dto';
+import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { resolveClientIdForActor } from '../../common/auth/client-access.util';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  async create(dto: CreateTransactionDto, actorId: string) {
+  async create(dto: CreateTransactionDto, actor: JwtPayload) {
+    const clientId = await resolveClientIdForActor(
+      this.prisma,
+      actor,
+      dto.clientId,
+    );
+
     const client = await this.prisma.client.findUnique({
-      where: { id: dto.clientId },
+      where: { id: clientId },
     });
 
     if (!client) {
@@ -24,16 +36,16 @@ export class TransactionsService {
 
     const transaction = await this.prisma.transaction.create({
       data: {
-        clientId: dto.clientId,
+        clientId,
         type: dto.type,
         amount: dto.amount,
         currency: dto.currency.toUpperCase(),
         reference: dto.reference,
         description: dto.description,
-        requestedById: actorId,
+        requestedById: actor.sub,
         auditLogs: {
           create: {
-            actorId,
+            actorId: actor.sub,
             action: 'TRANSACTION_CREATED',
             toStatus: TransactionStatus.PENDING,
             note: dto.description,

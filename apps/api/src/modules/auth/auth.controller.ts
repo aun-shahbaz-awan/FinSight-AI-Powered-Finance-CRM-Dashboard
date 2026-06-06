@@ -10,6 +10,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { Throttle } from '@nestjs/throttler';
 
 const REFRESH_COOKIE = 'refresh_token';
 
@@ -24,11 +25,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   async login(
     @Body() dto: LoginDto,
     @Req() req: Request,
@@ -54,6 +57,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   async refresh(@Req() req: AuthCookieRequest, @Res() res: Response) {
     const token = req.cookies?.[REFRESH_COOKIE];
 
