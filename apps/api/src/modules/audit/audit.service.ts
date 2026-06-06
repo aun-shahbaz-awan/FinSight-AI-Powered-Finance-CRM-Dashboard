@@ -15,8 +15,10 @@ export class AuditService {
     userAgent?: string;
     metadata?: Prisma.InputJsonValue;
   }): Promise<AuditLog> {
+    const data: Prisma.AuditLogUncheckedCreateInput = payload;
+
     return await this.prisma.auditLog.create({
-      data: payload,
+      data,
     });
   }
 }

@@ -12,16 +12,30 @@ import { GenerateSupportReplyDto } from './dto/generate-support-reply.dto';
 
 @Injectable()
 export class AiService {
+  private readonly provider = process.env.AI_PROVIDER || 'openai';
+
   private readonly client = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseURL: 'https://openrouter.ai/api/v1',
-    defaultHeaders: {
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-      'X-Title': 'FinSight AI',
-    },
+    apiKey:
+      this.provider === 'openrouter'
+        ? process.env.OPENROUTER_API_KEY
+        : process.env.OPENAI_API_KEY,
+    ...(this.provider === 'openrouter'
+      ? {
+          baseURL: 'https://openrouter.ai/api/v1',
+          defaultHeaders: {
+            'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+            'X-Title': 'FinSight AI',
+          },
+        }
+      : {}),
+    timeout: 30_000,
+    maxRetries: 0,
   });
 
-  private readonly model = process.env.OPENROUTER_MODEL || 'openrouter/free';
+  private readonly model =
+    this.provider === 'openrouter'
+      ? process.env.OPENROUTER_MODEL || 'openrouter/free'
+      : process.env.OPENAI_MODEL || 'gpt-4.1-mini';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -272,7 +286,7 @@ ${tickets
   }
 
   async getMyLogs(userId: string) {
-    return this.prisma.aiLog.findMany({
+    return await this.prisma.aiLog.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -280,8 +294,23 @@ ${tickets
   }
 
   private async generateText(prompt: string): Promise<string> {
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new BadGatewayException('OPENROUTER_API_KEY is missing');
+    if (!['openai', 'openrouter'].includes(this.provider)) {
+      throw new BadGatewayException(
+        `Unsupported AI_PROVIDER: ${this.provider}`,
+      );
+    }
+
+    const apiKey =
+      this.provider === 'openrouter'
+        ? process.env.OPENROUTER_API_KEY
+        : process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      const keyName =
+        this.provider === 'openrouter'
+          ? 'OPENROUTER_API_KEY'
+          : 'OPENAI_API_KEY';
+      throw new BadGatewayException(`${keyName} is missing`);
     }
 
     try {
@@ -306,9 +335,15 @@ ${tickets
         'No AI response generated.'
       );
     } catch (error) {
-      console.error('OpenRouter AI error:', error);
+      console.error(`${this.provider} AI error:`, error);
+
+      const providerError =
+        error instanceof OpenAI.APIError
+          ? ` (${error.status}${error.code ? `: ${error.code}` : ''})`
+          : '';
+
       throw new BadGatewayException(
-        'AI provider failed. Please try again later.',
+        `${this.provider} request failed${providerError}. Please try again later.`,
       );
     }
   }
@@ -319,15 +354,19 @@ ${tickets
     prompt: string;
     response: string;
     metadata?: Prisma.InputJsonValue;
-  }) {
-    await this.prisma.aiLog.create({
-      data: {
-        userId: payload.userId,
-        action: payload.action,
-        prompt: payload.prompt,
-        response: payload.response,
-        metadata: payload.metadata,
+  }): Promise<void> {
+    const data: Prisma.AiLogCreateInput = {
+      action: payload.action,
+      prompt: payload.prompt,
+      response: payload.response,
+      user: {
+        connect: { id: payload.userId },
       },
+      metadata: payload.metadata,
+    };
+
+    await this.prisma.aiLog.create({
+      data,
     });
   }
 }
